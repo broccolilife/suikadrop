@@ -7,14 +7,37 @@ import SwiftUI
 
 enum DesignTokens {
     
-    // MARK: Spacing
+    // MARK: Spacing (8pt grid)
     enum Spacing {
-        static let xs: CGFloat = 4
-        static let sm: CGFloat = 8
+        static let xxxs: CGFloat = 2
+        static let xxs: CGFloat = 4
+        static let xs: CGFloat = 8
+        static let sm: CGFloat = 12
         static let md: CGFloat = 16
         static let lg: CGFloat = 24
         static let xl: CGFloat = 32
         static let xxl: CGFloat = 48
+        static let xxxl: CGFloat = 64
+    }
+
+    // MARK: Semantic Colors
+    enum Colors {
+        static let primary = Color("AccentColor")
+        static let secondary = Color.secondary
+        static let background = Color(.systemBackground)
+        static let surfacePrimary = Color(.secondarySystemBackground)
+        static let surfaceSecondary = Color(.tertiarySystemBackground)
+        static let textPrimary = Color(.label)
+        static let textSecondary = Color(.secondaryLabel)
+        static let success = Color.green
+        static let warning = Color.orange
+        static let error = Color.red
+    }
+
+    // MARK: Elevation
+    enum Elevation {
+        static let card = ShadowStyle(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
+        static let popup = ShadowStyle(color: .black.opacity(0.15), radius: 20, x: 0, y: -4)
     }
     
     // MARK: Corner Radius
@@ -71,5 +94,20 @@ enum DesignTokens {
         static let sm: (color: Color, radius: CGFloat, y: CGFloat) = (.black.opacity(0.08), 4, 2)
         static let md: (color: Color, radius: CGFloat, y: CGFloat) = (.black.opacity(0.12), 8, 4)
         static let lg: (color: Color, radius: CGFloat, y: CGFloat) = (.black.opacity(0.16), 16, 8)
+    }
+}
+
+// MARK: - Elevation Support
+
+struct ShadowStyle {
+    let color: Color
+    let radius: CGFloat
+    let x: CGFloat
+    let y: CGFloat
+}
+
+extension View {
+    func elevation(_ style: ShadowStyle) -> some View {
+        self.shadow(color: style.color, radius: style.radius, x: style.x, y: style.y)
     }
 }
