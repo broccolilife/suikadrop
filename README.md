@@ -80,6 +80,11 @@ The app uses a token-based design system inspired by Ice and CodeEdit:
 
 🟡 **In development** — Core gameplay and design system established
 
+## Documentation
+
+- **[Architecture Overview](docs/ARCHITECTURE.md)** — System design, design patterns, and platform requirements
+- **[Getting Started Guide](docs/GETTING-STARTED.md)** — Setup, development workflow, and common tasks
+
 ## License
 
 Private — not yet open source
