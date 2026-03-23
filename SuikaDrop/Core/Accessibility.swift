@@ -64,6 +64,41 @@ struct AppSection<Content: View>: View {
     }
 }
 
+// MARK: - VoiceOver Announcements
+
+enum AccessibilityAnnouncements {
+    static func announce(_ message: String) {
+        UIAccessibility.post(notification: .announcement, argument: message)
+    }
+
+    static func screenChanged(_ message: String? = nil) {
+        UIAccessibility.post(notification: .screenChanged, argument: message)
+    }
+
+    static func layoutChanged(_ message: String? = nil) {
+        UIAccessibility.post(notification: .layoutChanged, argument: message)
+    }
+}
+
+// MARK: - Reduce Motion Support
+
+extension View {
+    /// Returns the reduced-motion-safe animation, or nil if reduce motion is on
+    func adaptiveAnimation<V: Equatable>(_ animation: Animation, value: V) -> some View {
+        self.animation(UIAccessibility.isReduceMotionEnabled ? .none : animation, value: value)
+    }
+
+    /// Conditionally applies transition only when reduce motion is off
+    @ViewBuilder
+    func motionSafeTransition(_ transition: AnyTransition) -> some View {
+        if UIAccessibility.isReduceMotionEnabled {
+            self
+        } else {
+            self.transition(transition)
+        }
+    }
+}
+
 // MARK: - Haptic Feedback
 
 enum HapticManager {
