@@ -1,144 +1,124 @@
 import Foundation
 
-// MARK: - ML-based Difficulty Adaptation
-// Tracks player performance and dynamically adjusts game difficulty
-// using exponential moving average and change-point detection.
+// MARK: - ML-Based Difficulty Adaptation
 
-/// Represents a snapshot of player performance metrics.
-struct PerformanceSnapshot: Codable {
-    let score: Int
-    let mergeCount: Int
-    let dropCount: Int
-    let survivalTimeSeconds: Double
-    let timestamp: Date
-
-    var mergeRatio: Double {
-        guard dropCount > 0 else { return 0 }
-        return Double(mergeCount) / Double(dropCount)
+/// Tracks player performance metrics and adapts game difficulty in real-time
+/// using a lightweight online learning approach (exponential moving average + threshold bands).
+final class DifficultyAdapter: ObservableObject {
+    
+    // MARK: - Types
+    
+    struct PlayerMetrics {
+        var mergeRate: Double        // merges per minute
+        var avgDropAccuracy: Double  // 0-1, how close to intended target
+        var survivalTime: TimeInterval
+        var scorePerMinute: Double
+        var comboFrequency: Double   // combos per minute
     }
-
-    var scorePerSecond: Double {
-        guard survivalTimeSeconds > 0 else { return 0 }
-        return Double(score) / survivalTimeSeconds
+    
+    enum DifficultyLevel: String, CaseIterable {
+        case easy, medium, hard, expert
+        
+        var dropSpeedMultiplier: Double {
+            switch self {
+            case .easy:   return 0.7
+            case .medium: return 1.0
+            case .hard:   return 1.3
+            case .expert: return 1.6
+            }
+        }
+        
+        var fruitVariety: Int {
+            switch self {
+            case .easy:   return 5
+            case .medium: return 7
+            case .hard:   return 9
+            case .expert: return 11
+            }
+        }
     }
-}
-
-/// Difficulty parameters that the game engine uses.
-struct DifficultyParams: Codable, Equatable {
-    var dropSpeedMultiplier: Double      // 0.5 (easy) to 2.0 (hard)
-    var maxFruitTier: Int                // highest tier fruit that can spawn
-    var gravityMultiplier: Double        // physics gravity scale
-    var spawnVariety: Int                // how many distinct fruits in rotation
-
-    static let easy = DifficultyParams(
-        dropSpeedMultiplier: 0.6,
-        maxFruitTier: 3,
-        gravityMultiplier: 0.8,
-        spawnVariety: 3
-    )
-
-    static let normal = DifficultyParams(
-        dropSpeedMultiplier: 1.0,
-        maxFruitTier: 5,
-        gravityMultiplier: 1.0,
-        spawnVariety: 5
-    )
-
-    static let hard = DifficultyParams(
-        dropSpeedMultiplier: 1.4,
-        maxFruitTier: 7,
-        gravityMultiplier: 1.2,
-        spawnVariety: 7
-    )
-}
-
-/// Adaptive difficulty engine using player performance tracking.
-final class DifficultyAdapter {
-
+    
     // MARK: - Properties
-
-    private var history: [PerformanceSnapshot] = []
-    private let windowSize: Int
-    private let emaAlpha: Double
-
-    private(set) var currentParams: DifficultyParams
-    private(set) var playerSkillEstimate: Double = 0.5  // 0 = beginner, 1 = expert
-
-    // MARK: - Init
-
-    init(windowSize: Int = 20, emaAlpha: Double = 0.3) {
-        self.windowSize = windowSize
-        self.emaAlpha = emaAlpha
-        self.currentParams = .normal
-    }
-
-    // MARK: - Core
-
-    /// Record a game session and update difficulty.
-    @discardableResult
-    func recordSession(_ snapshot: PerformanceSnapshot) -> DifficultyParams {
-        history.append(snapshot)
-        if history.count > windowSize * 2 {
-            history = Array(history.suffix(windowSize))
+    
+    @Published private(set) var currentDifficulty: DifficultyLevel = .medium
+    @Published private(set) var skillEstimate: Double = 0.5 // 0 (beginner) to 1 (expert)
+    
+    private var emaAlpha: Double = 0.15
+    private var performanceHistory: [Double] = []
+    private let maxHistory = 50
+    
+    // Thresholds for difficulty transitions
+    private let thresholds: [(range: ClosedRange<Double>, level: DifficultyLevel)] = [
+        (0.0...0.25,  .easy),
+        (0.25...0.55, .medium),
+        (0.55...0.80, .hard),
+        (0.80...1.0,  .expert),
+    ]
+    
+    // MARK: - Methods
+    
+    /// Update skill estimate with new performance observation
+    func recordPerformance(_ metrics: PlayerMetrics) {
+        let normalized = normalizeMetrics(metrics)
+        
+        // EMA update
+        skillEstimate = emaAlpha * normalized + (1 - emaAlpha) * skillEstimate
+        skillEstimate = max(0, min(1, skillEstimate))
+        
+        // Track history for variance detection
+        performanceHistory.append(normalized)
+        if performanceHistory.count > maxHistory {
+            performanceHistory.removeFirst()
         }
-
-        updateSkillEstimate()
-        adaptDifficulty()
-        return currentParams
+        
+        // Update difficulty level
+        updateDifficulty()
     }
-
-    /// Compute EMA of a metric over recent history.
-    func ema(of keyPath: KeyPath<PerformanceSnapshot, Double>) -> Double {
-        guard !history.isEmpty else { return 0 }
-
-        var result = history[0][keyPath: keyPath]
-        for snapshot in history.dropFirst() {
-            result = emaAlpha * snapshot[keyPath: keyPath] + (1 - emaAlpha) * result
+    
+    /// Compute a flow-state score (0-1). High = player is in the zone.
+    var flowScore: Double {
+        guard performanceHistory.count >= 5 else { return 0.5 }
+        let recent = Array(performanceHistory.suffix(10))
+        let mean = recent.reduce(0, +) / Double(recent.count)
+        let variance = recent.map { ($0 - mean) * ($0 - mean) }.reduce(0, +) / Double(recent.count)
+        
+        // Low variance + moderate-high performance = flow state
+        let stabilityScore = max(0, 1.0 - variance * 10)
+        let performanceScore = mean
+        return (stabilityScore * 0.4 + performanceScore * 0.6)
+    }
+    
+    /// Suggest next fruit weights based on current skill (makes harder fruits rarer for beginners)
+    func fruitSpawnWeights(fruitCount: Int) -> [Double] {
+        let n = min(fruitCount, currentDifficulty.fruitVariety)
+        return (0..<n).map { i in
+            let baseProbability = 1.0 / Double(n)
+            let difficultyBias = Double(i) / Double(n) * (1.0 - skillEstimate)
+            return max(0.05, baseProbability - difficultyBias * 0.5)
         }
-        return result
     }
-
+    
     // MARK: - Private
-
-    private func updateSkillEstimate() {
-        let mergeEMA = ema(of: \.mergeRatio)
-        let spsEMA = ema(of: \.scorePerSecond)
-
-        // Normalize: mergeRatio typically 0-1, sps varies by game
-        // Use sigmoid-like mapping
-        let mergeSignal = mergeEMA  // already 0-1
-        let spsSignal = min(spsEMA / 50.0, 1.0)  // normalize to ~0-1
-
-        playerSkillEstimate = 0.6 * mergeSignal + 0.4 * spsSignal
+    
+    private func normalizeMetrics(_ m: PlayerMetrics) -> Double {
+        // Weighted combination of normalized metrics
+        let mergeScore = min(m.mergeRate / 12.0, 1.0)
+        let accuracyScore = m.avgDropAccuracy
+        let survivalScore = min(m.survivalTime / 300.0, 1.0)
+        let comboScore = min(m.comboFrequency / 5.0, 1.0)
+        
+        return mergeScore * 0.25 + accuracyScore * 0.3 + survivalScore * 0.25 + comboScore * 0.2
     }
-
-    private func adaptDifficulty() {
-        // Smooth transitions between difficulty tiers
-        let skill = playerSkillEstimate
-
-        currentParams = DifficultyParams(
-            dropSpeedMultiplier: lerp(0.6, 1.6, t: skill),
-            maxFruitTier: Int(lerp(3, 8, t: skill)),
-            gravityMultiplier: lerp(0.8, 1.3, t: skill),
-            spawnVariety: Int(lerp(3, 7, t: skill))
-        )
-    }
-
-    private func lerp(_ a: Double, _ b: Double, t: Double) -> Double {
-        a + (b - a) * max(0, min(1, t))
-    }
-
-    /// Detect if player is on a losing streak (potential frustration).
-    var isPlayerStruggling: Bool {
-        guard history.count >= 3 else { return false }
-        let recent = history.suffix(3)
-        return recent.allSatisfy { $0.mergeRatio < 0.2 }
-    }
-
-    /// Reset to defaults.
-    func reset() {
-        history.removeAll()
-        currentParams = .normal
-        playerSkillEstimate = 0.5
+    
+    private func updateDifficulty() {
+        // Require stable estimate (low recent variance) before changing
+        guard performanceHistory.count >= 5 else { return }
+        
+        for (range, level) in thresholds {
+            if range.contains(skillEstimate) && level != currentDifficulty {
+                currentDifficulty = level
+                break
+            }
+        }
     }
 }
