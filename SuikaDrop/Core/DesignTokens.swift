@@ -1,13 +1,12 @@
-// DesignTokens.swift — Shared Design Token System
-// Applied from Pixel+Flow iOS UI knowledge base
-
 import SwiftUI
 
 // MARK: - Design Tokens
+/// Centralized design tokens for SuikaDrop.
+/// 8pt grid, semantic colors tuned for playful fruit-drop game UX.
 
 enum DesignTokens {
-    
-    // MARK: Spacing (8pt grid)
+
+    // MARK: - Spacing (8pt grid)
     enum Spacing {
         static let xxxs: CGFloat = 2
         static let xxs: CGFloat = 4
@@ -18,96 +17,167 @@ enum DesignTokens {
         static let xl: CGFloat = 32
         static let xxl: CGFloat = 48
         static let xxxl: CGFloat = 64
+
+        /// Dynamic Type-aware spacing
+        static func scaled(_ base: CGFloat, relativeTo style: Font.TextStyle = .body) -> CGFloat {
+            UIFontMetrics(forTextStyle: style.uiKit).scaledValue(for: base)
+        }
     }
 
-    // MARK: Semantic Colors
+    // MARK: - Corner Radii
+    enum Radius {
+        static let xs: CGFloat = 4
+        static let sm: CGFloat = 8
+        static let md: CGFloat = 12
+        static let lg: CGFloat = 16
+        static let xl: CGFloat = 24
+        static let card: CGFloat = 20
+        static let full: CGFloat = 9999
+
+        static func continuous(_ radius: CGFloat) -> RoundedRectangle {
+            RoundedRectangle(cornerRadius: radius, style: .continuous)
+        }
+    }
+
+    // MARK: - Semantic Colors
     enum Colors {
+        // Surfaces
         static let primary = Color("AccentColor")
         static let secondary = Color.secondary
         static let background = Color(.systemBackground)
         static let surfacePrimary = Color(.secondarySystemBackground)
         static let surfaceSecondary = Color(.tertiarySystemBackground)
+        static let surfaceElevated = Color(.systemBackground)
+
+        // Text
         static let textPrimary = Color(.label)
         static let textSecondary = Color(.secondaryLabel)
+        static let textTertiary = Color(.tertiaryLabel)
+        static let textOnPrimary = Color.white
+
+        // Game-specific
+        static let fruitGlow = Color.yellow.opacity(0.6)
+        static let mergeFlash = Color.white
+        static let comboHighlight = Color.orange
+        static let dropZoneActive = Color.blue.opacity(0.3)
+        static let dropZoneIdle = Color.gray.opacity(0.15)
+        static let scoreAccent = Color.yellow
+        static let gameOverOverlay = Color.black.opacity(0.7)
+
+        // Interactive
+        static let interactive = Color.accentColor
+        static let interactivePressed = Color.accentColor.opacity(0.7)
+        static let destructive = Color.red
         static let success = Color.green
-        static let warning = Color.orange
-        static let error = Color.red
+
+        // Separators
+        static let separator = Color(.separator)
+        static let opaqueSeparator = Color(.opaqueSeparator)
     }
 
-    // MARK: Elevation
+    // MARK: - Elevation
     enum Elevation {
-        static let card = ShadowStyle(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
-        static let popup = ShadowStyle(color: .black.opacity(0.15), radius: 20, x: 0, y: -4)
+        case flat, raised, floating, overlay
+
+        var shadow: (color: Color, radius: CGFloat, x: CGFloat, y: CGFloat) {
+            switch self {
+            case .flat:     return (.clear, 0, 0, 0)
+            case .raised:   return (.black.opacity(0.08), 4, 0, 2)
+            case .floating: return (.black.opacity(0.15), 12, 0, 6)
+            case .overlay:  return (.black.opacity(0.25), 24, 0, 12)
+            }
+        }
+
+        var background: Color {
+            switch self {
+            case .flat:     return Colors.background
+            case .raised:   return Colors.surfacePrimary
+            case .floating: return Colors.surfaceElevated
+            case .overlay:  return Colors.surfaceElevated
+            }
+        }
     }
-    
-    // MARK: Corner Radius
-    enum Radius {
-        static let sm: CGFloat = 8
-        static let md: CGFloat = 12
-        static let lg: CGFloat = 16
-        static let xl: CGFloat = 24
-        static let pill: CGFloat = 999
-    }
-    
-    // MARK: Typography (see Typography.swift for full type system)
-    enum Typography {
-        static let caption: Font = .caption
-        static let body: Font = .body
-        static let headline: Font = .headline
-        static let title: Font = .title2
-        static let largeTitle: Font = .largeTitle
-        
-        // Line heights (multipliers)
-        static let tightLeading: CGFloat = 1.1
-        static let normalLeading: CGFloat = 1.4
-        static let relaxedLeading: CGFloat = 1.6
-    }
-    
-    // MARK: Animation (see SpringAnimations.swift for spring presets)
+
+    // MARK: - Motion
     enum Motion {
+        static let instant: Animation = .easeOut(duration: 0.1)
         static let quick: Animation = .easeOut(duration: 0.15)
         static let standard: Animation = .easeInOut(duration: 0.3)
-        static let bouncy: Animation = .bouncy(duration: 0.5, extraBounce: 0.3)
-        static let spring: Animation = .spring(response: 0.4, dampingFraction: 0.7)
-        static let snappySpring: Animation = .spring(response: 0.2, dampingFraction: 0.7)
-        static let gentleSpring: Animation = .spring(response: 0.55, dampingFraction: 0.9)
+        static let slow: Animation = .easeInOut(duration: 0.5)
+
+        // Springs
+        static let springSnappy: Animation = .spring(response: 0.2, dampingFraction: 0.7)
+        static let springDefault: Animation = .spring(response: 0.4, dampingFraction: 0.75)
+        static let springBouncy: Animation = .bouncy(duration: 0.5, extraBounce: 0.3)
+        static let springGentle: Animation = .spring(response: 0.55, dampingFraction: 0.9)
+
+        // Game-specific
+        static let fruitDrop: Animation = .spring(response: 0.35, dampingFraction: 0.6)
+        static let mergePopIn: Animation = .spring(response: 0.25, dampingFraction: 0.5, blendDuration: 0.1)
+        static let scorePulse: Animation = .spring(response: 0.3, dampingFraction: 0.4)
     }
-    
-    // MARK: Opacity
+
+    // MARK: - Opacity
     enum Opacity {
-        static let disabled: Double = 0.4
+        static let disabled: Double = 0.38
         static let secondary: Double = 0.6
         static let overlay: Double = 0.8
         static let full: Double = 1.0
+        static let scrim: Double = 0.4
+        static let ghostFruit: Double = 0.5
     }
-    
-    // MARK: Layout
+
+    // MARK: - Layout
     enum Layout {
         static let maxContentWidth: CGFloat = 428
         static let buttonHeight: CGFloat = 50
-        static let iconSize: CGFloat = 24
-        static let iconSizeLg: CGFloat = 32
+        static let buttonHeightCompact: CGFloat = 36
+        static let hitTarget: CGFloat = 44
+        static let scoreBarHeight: CGFloat = 56
+        static let fruitMinSize: CGFloat = 28
+        static let fruitMaxSize: CGFloat = 120
+        static let dropZonePadding: CGFloat = 16
     }
-    
-    // MARK: Shadows
-    enum Shadow {
-        static let sm: (color: Color, radius: CGFloat, y: CGFloat) = (.black.opacity(0.08), 4, 2)
-        static let md: (color: Color, radius: CGFloat, y: CGFloat) = (.black.opacity(0.12), 8, 4)
-        static let lg: (color: Color, radius: CGFloat, y: CGFloat) = (.black.opacity(0.16), 16, 8)
+
+    // MARK: - Duration
+    enum Duration {
+        static let instant: TimeInterval = 0.1
+        static let fast: TimeInterval = 0.2
+        static let normal: TimeInterval = 0.3
+        static let slow: TimeInterval = 0.5
+        static let mergeFlash: TimeInterval = 0.15
+        static let comboWindow: TimeInterval = 1.5
     }
 }
 
-// MARK: - Elevation Support
-
-struct ShadowStyle {
-    let color: Color
-    let radius: CGFloat
-    let x: CGFloat
-    let y: CGFloat
-}
+// MARK: - Elevation View Modifier
 
 extension View {
-    func elevation(_ style: ShadowStyle) -> some View {
-        self.shadow(color: style.color, radius: style.radius, x: style.x, y: style.y)
+    func elevation(_ level: DesignTokens.Elevation) -> some View {
+        let s = level.shadow
+        return self
+            .background(level.background, in: DesignTokens.Radius.continuous(DesignTokens.Radius.card))
+            .shadow(color: s.color, radius: s.radius, x: s.x, y: s.y)
+    }
+}
+
+// MARK: - UIKit Bridge
+
+private extension Font.TextStyle {
+    var uiKit: UIFont.TextStyle {
+        switch self {
+        case .largeTitle:  return .largeTitle
+        case .title:       return .title1
+        case .title2:      return .title2
+        case .title3:      return .title3
+        case .headline:    return .headline
+        case .body:        return .body
+        case .callout:     return .callout
+        case .subheadline: return .subheadline
+        case .footnote:    return .footnote
+        case .caption:     return .caption1
+        case .caption2:    return .caption2
+        @unknown default:  return .body
+        }
     }
 }

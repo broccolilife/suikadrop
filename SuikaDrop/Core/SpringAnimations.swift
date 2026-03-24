@@ -1,95 +1,95 @@
-// SpringAnimations.swift — Spring animation presets for SuikaDrop
-// Pixel+Muse — physics-based motion for game interactions
-
 import SwiftUI
 
-// MARK: - Spring Presets
+// MARK: - Spring Animation Presets for SuikaDrop
 
+/// Reusable spring configurations for game interactions.
 enum SpringPreset {
-    
-    /// Fruit drop — heavy, satisfying landing
-    static let fruitDrop: Animation = .spring(response: 0.45, dampingFraction: 0.6, blendDuration: 0.1)
-    
-    /// Merge celebration — bouncy pop when fruits combine
-    static let mergePop: Animation = .spring(response: 0.35, dampingFraction: 0.5, blendDuration: 0)
-    
-    /// Score float — gentle rise for score popups
-    static let scoreFloat: Animation = .spring(response: 0.6, dampingFraction: 0.8)
-    
-    /// Button press — snappy tactile feedback
-    static let buttonPress: Animation = .spring(response: 0.25, dampingFraction: 0.65)
-    
-    /// Menu slide — smooth panel transitions
-    static let menuSlide: Animation = .spring(response: 0.5, dampingFraction: 0.85)
-    
-    /// Wobble — playful idle animation for fruits
-    static let wobble: Animation = .spring(response: 0.3, dampingFraction: 0.35)
-    
-    /// Gentle — subtle UI state changes
-    static let gentle: Animation = .spring(response: 0.55, dampingFraction: 0.9)
-    
-    /// Snappy — instant-feel interactions
-    static let snappy: Animation = .spring(response: 0.2, dampingFraction: 0.7)
-}
+    case snappy, bouncy, gentle, fruitDrop, merge, scorePop
 
-// MARK: - Animated Modifiers
-
-struct BounceOnAppear: ViewModifier {
-    @State private var appeared = false
-    let delay: Double
-    
-    init(delay: Double = 0) {
-        self.delay = delay
-    }
-    
-    func body(content: Content) -> some View {
-        content
-            .scaleEffect(appeared ? 1 : 0.3)
-            .opacity(appeared ? 1 : 0)
-            .onAppear {
-                withAnimation(SpringPreset.mergePop.delay(delay)) {
-                    appeared = true
-                }
-            }
+    var animation: Animation {
+        switch self {
+        case .snappy:    return .spring(response: 0.2, dampingFraction: 0.7)
+        case .bouncy:    return .bouncy(duration: 0.5, extraBounce: 0.3)
+        case .gentle:    return .spring(response: 0.55, dampingFraction: 0.9)
+        case .fruitDrop: return .spring(response: 0.35, dampingFraction: 0.6)
+        case .merge:     return .spring(response: 0.25, dampingFraction: 0.5, blendDuration: 0.1)
+        case .scorePop:  return .spring(response: 0.3, dampingFraction: 0.4)
+        }
     }
 }
 
-struct PressableStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.92 : 1)
-            .animation(SpringPreset.buttonPress, value: configuration.isPressed)
-    }
-}
-
-struct ShakeEffect: GeometryEffect {
-    var amount: CGFloat = 6
-    var shakesPerUnit = 3
-    var animatableData: CGFloat
-    
-    func effectValue(size: CGSize) -> ProjectionTransform {
-        ProjectionTransform(CGAffineTransform(
-            translationX: amount * sin(animatableData * .pi * CGFloat(shakesPerUnit)),
-            y: 0
-        ))
-    }
-}
-
-// MARK: - View Extensions
+// MARK: - Spring View Modifiers
 
 extension View {
-    /// Bounce in on appear with optional stagger delay
-    func bounceOnAppear(delay: Double = 0) -> some View {
-        modifier(BounceOnAppear(delay: delay))
+    /// Applies a spring scale effect triggered by a boolean.
+    func springScale(isActive: Bool, preset: SpringPreset = .bouncy, activeScale: CGFloat = 1.15) -> some View {
+        self
+            .scaleEffect(isActive ? activeScale : 1.0)
+            .animation(preset.animation, value: isActive)
     }
-    
-    /// Apply pressable button style
-    func pressable() -> some View {
-        buttonStyle(PressableStyle())
+
+    /// Fruit merge pop animation — scales up then back.
+    func mergePopEffect(trigger: Bool) -> some View {
+        self
+            .scaleEffect(trigger ? 1.4 : 1.0)
+            .opacity(trigger ? 0.0 : 1.0)
+            .animation(SpringPreset.merge.animation, value: trigger)
     }
-    
-    /// Animate with a named spring preset
-    func withSpring(_ preset: Animation, value: some Equatable) -> some View {
-        animation(preset, value: value)
+
+    /// Score increment pulse — brief scale bump.
+    func scorePulse(trigger: Int) -> some View {
+        self
+            .scaleEffect(1.0)
+            .animation(SpringPreset.scorePop.animation, value: trigger)
+    }
+
+    /// Fruit drop entrance — slides in from top with spring.
+    func fruitDropEntrance(isVisible: Bool) -> some View {
+        self
+            .offset(y: isVisible ? 0 : -80)
+            .opacity(isVisible ? 1.0 : 0.0)
+            .animation(SpringPreset.fruitDrop.animation, value: isVisible)
+    }
+
+    /// Gentle breathing/idle animation for UI elements.
+    func breathingEffect(isActive: Bool) -> some View {
+        self
+            .scaleEffect(isActive ? 1.03 : 1.0)
+            .animation(
+                isActive
+                    ? .easeInOut(duration: 2.0).repeatForever(autoreverses: true)
+                    : .default,
+                value: isActive
+            )
+    }
+
+    /// Combo chain shake — horizontal wiggle for combo feedback.
+    func comboShake(trigger: Int) -> some View {
+        let amount: CGFloat = trigger > 0 ? 6 : 0
+        return self
+            .offset(x: amount)
+            .animation(SpringPreset.snappy.animation, value: trigger)
+    }
+}
+
+// MARK: - Spring Transition Helpers
+
+extension AnyTransition {
+    /// Pop-in from small scale with spring.
+    static var springPopIn: AnyTransition {
+        .scale(scale: 0.5)
+        .combined(with: .opacity)
+    }
+
+    /// Slide up with spring bounce.
+    static var springSlideUp: AnyTransition {
+        .move(edge: .bottom)
+        .combined(with: .opacity)
+    }
+
+    /// Game over curtain — fade from top.
+    static var curtainDrop: AnyTransition {
+        .move(edge: .top)
+        .combined(with: .opacity)
     }
 }
