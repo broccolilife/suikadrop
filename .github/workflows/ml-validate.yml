@@ -1,0 +1,24 @@
+name: ML Validation
+
+on:
+  push:
+    branches: [main]
+    paths: ['ml/**']
+  pull_request:
+    branches: [main]
+    paths: ['ml/**']
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: pip install -r ml/requirements.txt
+      - name: Run ML tests
+        run: pytest ml/tests/ -v
+      - name: Validate difficulty model
+        run: python ml/validate_difficulty.py
