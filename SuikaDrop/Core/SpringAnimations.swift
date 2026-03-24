@@ -92,4 +92,24 @@ extension View {
     func withSpring(_ preset: Animation, value: some Equatable) -> some View {
         animation(preset, value: value)
     }
+    
+    /// Reduce-motion aware animation — falls back to .easeInOut for users who prefer reduced motion
+    func adaptiveAnimation(_ animation: Animation, value: some Equatable) -> some View {
+        self.transaction { t in
+            if UIAccessibility.isReduceMotionEnabled {
+                t.animation = .easeInOut(duration: 0.2)
+            } else {
+                t.animation = animation
+            }
+        }
+    }
+}
+
+// MARK: - Reduce Motion Helpers
+
+extension Animation {
+    /// Returns a reduced version if Reduce Motion is on
+    static func adaptive(_ preferred: Animation, reduced: Animation = .easeInOut(duration: 0.2)) -> Animation {
+        UIAccessibility.isReduceMotionEnabled ? reduced : preferred
+    }
 }

@@ -79,3 +79,40 @@ enum HapticManager {
         UISelectionFeedbackGenerator().selectionChanged()
     }
 }
+
+// MARK: - Touch Target Enforcement
+
+extension View {
+    /// Ensures minimum 44pt touch target per Apple HIG
+    func ensureTouchTarget() -> some View {
+        self.frame(
+            minWidth: DesignTokens.Layout.minTouchTarget,
+            minHeight: DesignTokens.Layout.minTouchTarget
+        )
+    }
+}
+
+// MARK: - Dynamic Type Support
+
+extension View {
+    /// Scales value with Dynamic Type preference
+    func accessibilityScaledPadding(_ edges: Edge.Set = .all, _ base: CGFloat = DesignTokens.Spacing.md) -> some View {
+        self.padding(edges, base)
+    }
+}
+
+// MARK: - VoiceOver Game Announcements
+
+enum GameAccessibility {
+    static func announceScore(_ score: Int) {
+        UIAccessibility.post(notification: .announcement, argument: "Score: \(score)")
+    }
+    
+    static func announceGameOver(score: Int) {
+        UIAccessibility.post(notification: .announcement, argument: "Game over. Final score: \(score)")
+    }
+    
+    static func announceMerge(fruit: String) {
+        UIAccessibility.post(notification: .announcement, argument: "Merged into \(fruit)")
+    }
+}

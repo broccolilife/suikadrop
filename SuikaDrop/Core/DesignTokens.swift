@@ -62,8 +62,22 @@ enum DesignTokens {
     enum Layout {
         static let maxContentWidth: CGFloat = 428
         static let buttonHeight: CGFloat = 50
+        static let minTouchTarget: CGFloat = 44  // Apple HIG minimum
         static let iconSize: CGFloat = 24
         static let iconSizeLg: CGFloat = 32
+    }
+    
+    // MARK: Colors
+    enum Colors {
+        // Semantic
+        static let success = Color.green
+        static let warning = Color.orange
+        static let error = Color.red
+        static let info = Color.blue
+        
+        // Backgrounds
+        static let backgroundPrimary = Color(.systemBackground)
+        static let backgroundSecondary = Color(.secondarySystemBackground)
     }
     
     // MARK: Shadows
