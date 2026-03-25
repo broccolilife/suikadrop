@@ -72,3 +72,17 @@ Edit `Core/DesignTokens.swift` — changes propagate automatically to all views 
 1. Open **Accessibility Inspector** (Xcode → Open Developer Tool)
 2. Point it at the running simulator
 3. Navigate through the app — verify all elements have meaningful labels
+
+## Troubleshooting
+
+| Issue | Fix |
+|-------|-----|
+| Build fails on Xcode 15 | Xcode 16+ is required for Swift 5.9 and PhaseAnimator |
+| MeshGradient not rendering | Requires iOS 18+; falls back gracefully on iOS 17 |
+| Haptics not working | Haptics only work on physical devices, not simulators |
+| Simulator performance | SpriteKit physics may run slower on simulator; test on device for accurate feel |
+
+## Tips
+
+- Use **SpriteKit Statistics** (Debug → View Debugging → Show SpriteKit Statistics) to monitor frame rate and node count during development
+- The token system means global design changes (spacing, colors) only need edits in `Core/` — all views update automatically
