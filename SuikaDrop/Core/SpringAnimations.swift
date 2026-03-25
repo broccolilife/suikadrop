@@ -30,6 +30,15 @@ enum SpringPreset {
     
     /// Snappy — instant-feel interactions
     static let snappy: Animation = .spring(response: 0.2, dampingFraction: 0.7)
+    
+    /// Combo cascade — escalating bounce for consecutive merges
+    static let comboCascade: Animation = .spring(response: 0.3, dampingFraction: 0.45, blendDuration: 0.05)
+    
+    /// Container settle — physics-based settling after fruit lands
+    static let containerSettle: Animation = .spring(response: 0.6, dampingFraction: 0.7, blendDuration: 0.2)
+    
+    /// Game over — dramatic slow reveal
+    static let gameOver: Animation = .spring(response: 0.8, dampingFraction: 0.6)
 }
 
 // MARK: - Animated Modifiers
@@ -91,5 +100,34 @@ extension View {
     /// Animate with a named spring preset
     func withSpring(_ preset: Animation, value: some Equatable) -> some View {
         animation(preset, value: value)
+    }
+    
+    /// Staggered scale-in for lists of items (e.g., fruit selection, leaderboard)
+    func staggerIn(index: Int, baseDelay: Double = 0.04) -> some View {
+        modifier(BounceOnAppear(delay: Double(index) * baseDelay))
+    }
+}
+
+// MARK: - Combo Pulse (PhaseAnimator pattern)
+
+struct ComboPulse: ViewModifier {
+    let comboCount: Int
+    @State private var pulsing = false
+    
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(pulsing ? 1.0 + CGFloat(min(comboCount, 5)) * 0.05 : 1.0)
+            .animation(SpringPreset.comboCascade, value: pulsing)
+            .onChange(of: comboCount) { _, _ in
+                pulsing = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { pulsing = false }
+            }
+    }
+}
+
+extension View {
+    /// Pulse effect that intensifies with combo count
+    func comboPulse(count: Int) -> some View {
+        modifier(ComboPulse(comboCount: count))
     }
 }

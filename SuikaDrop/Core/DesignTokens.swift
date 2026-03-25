@@ -87,6 +87,29 @@ enum DesignTokens {
         static let buttonHeight: CGFloat = 50
         static let iconSize: CGFloat = 24
         static let iconSizeLg: CGFloat = 32
+        
+        /// Apple HIG: minimum 44pt touch targets for all interactive elements
+        static let minTouchTarget: CGFloat = 44
+        
+        /// Sling control area — generous for active gameplay (Fitts's Law)
+        static let slingControlArea: CGFloat = 120
+        
+        /// Safe area bottom padding for thumb reachability
+        static let bottomActionPadding: CGFloat = 34
+    }
+    
+    // MARK: Game-Specific
+    enum Game {
+        /// Frame budget for 60fps (Doherty Threshold)
+        static let frameBudgetMs: Double = 16.0
+        
+        /// Fruit sizes (progressive scale)
+        static let fruitSizeMin: CGFloat = 28
+        static let fruitSizeMed: CGFloat = 48
+        static let fruitSizeMax: CGFloat = 80
+        
+        /// Combo display duration
+        static let comboDisplayDuration: TimeInterval = 1.5
     }
     
     // MARK: Shadows

@@ -76,4 +76,30 @@ extension View {
     func heroStyle() -> some View {
         modifier(TypeStyle(AppTypography.heroTitle, tracking: -0.5))
     }
+    
+    /// Combo multiplier text — escalating emphasis
+    func comboStyle() -> some View {
+        modifier(TypeStyle(AppTypography.comboText, color: .orange, tracking: 1.0))
+    }
+}
+
+// MARK: - Dynamic Type Scaling
+
+extension AppTypography {
+    /// Combo multiplier — "x3!", "x4!"
+    static let comboText: Font = .system(size: 28, weight: .heavy, design: .rounded)
+    
+    /// Tutorial / onboarding text
+    static let tutorial: Font = .system(size: 18, weight: .medium, design: .rounded)
+    
+    /// Leaderboard rank
+    static let rank: Font = .system(size: 20, weight: .bold, design: .monospaced)
+    
+    /// Accessible variants that respect Dynamic Type
+    enum Accessible {
+        static let scoreDisplay: Font = .system(.largeTitle, design: .rounded, weight: .black)
+        static let heroTitle: Font = .system(.title, design: .rounded, weight: .bold)
+        static let body: Font = .system(.body, design: .rounded)
+        static let caption: Font = .system(.caption, design: .rounded, weight: .medium)
+    }
 }
