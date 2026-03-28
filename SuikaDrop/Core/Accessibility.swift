@@ -79,3 +79,30 @@ enum HapticManager {
         UISelectionFeedbackGenerator().selectionChanged()
     }
 }
+
+// MARK: - Dynamic Type Support
+
+extension View {
+    /// Caps Dynamic Type to prevent layout breakage in game UI
+    @ViewBuilder
+    func dynamicTypeCapped() -> some View {
+        self.dynamicTypeSize(...DynamicTypeSize.accessibility3)
+    }
+
+    /// Ensures minimum 44pt touch target (Apple HIG)
+    func minTouchTarget() -> some View {
+        self.frame(
+            minWidth: DesignTokens.Layout.iconSizeLg,
+            minHeight: DesignTokens.Layout.buttonHeight
+        )
+    }
+}
+
+// MARK: - Reduced Motion Aware Animation
+
+extension Animation {
+    /// Returns animation if reduced motion is off, nil otherwise
+    static func motionSafe(_ animation: Animation) -> Animation? {
+        UIAccessibility.isReduceMotionEnabled ? nil : animation
+    }
+}
