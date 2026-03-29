@@ -38,12 +38,18 @@ The foundation everything builds on. All UI decisions flow through centralized t
 | `AdaptiveLayout.swift` | Screen-size adaptation (iPhone SE → Pro Max) |
 | `ContextualTips.swift` | TipKit-based contextual hints for new players |
 | `NavigationRouter.swift` | Centralized navigation state with `@Observable` |
+| `ColorTokens.swift` | Extended color definitions and fruit-tier color mappings |
+| `ParticleAnimations.swift` | Particle effects for merge celebrations and combos |
 
 ### Views Layer (`SuikaDrop/Views/`)
 
 SwiftUI views composed from Core tokens. Each view is a focused, single-responsibility component.
 
-- `NextFruitPreview.swift` — Compact animated preview showing the next fruit, with a gentle bob animation and size/color based on fruit tier.
+| View | Purpose |
+|------|---------|
+| `NextFruitPreview.swift` | Animated preview of the next fruit with bob animation, sized/colored by tier |
+| `GameOverOverlay.swift` | Game over screen with score summary and replay option |
+| `ComboPopup.swift` | Animated popup showing combo multiplier during chain merges |
 
 ### Physics (SpriteKit)
 
