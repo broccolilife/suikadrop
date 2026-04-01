@@ -29,6 +29,86 @@ enum HapticEngine {
         UINotificationFeedbackGenerator().notificationOccurred(.success)
     }
 
+    static func comboStreak(_ count: Int) {
+        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else {
+            comboHit(count)
+            return
+        }
+
+        do {
+            let engine = try CHHapticEngine()
+            try engine.start()
+
+            var events: [CHHapticEvent] = []
+            let pulseCount = min(count, 5)
+            for i in 0..<pulseCount {
+                let time = Double(i) * 0.07
+                let intensity = Float(0.4 + Double(i) * 0.15)
+                let sharpness = Float(0.3 + Double(i) * 0.12)
+                events.append(CHHapticEvent(
+                    eventType: .hapticTransient,
+                    parameters: [
+                        CHHapticEventParameter(parameterID: .hapticIntensity, value: min(intensity, 1.0)),
+                        CHHapticEventParameter(parameterID: .hapticSharpness, value: min(sharpness, 1.0))
+                    ],
+                    relativeTime: time
+                ))
+            }
+
+            let pattern = try CHHapticPattern(events: events, parameters: [])
+            let player = try engine.makePlayer(with: pattern)
+            try player.start(atTime: 0)
+        } catch {
+            comboHit(count)
+        }
+    }
+
+    static func levelUp() {
+        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else {
+            newHighScore()
+            return
+        }
+
+        do {
+            let engine = try CHHapticEngine()
+            try engine.start()
+
+            let events: [CHHapticEvent] = [
+                CHHapticEvent(
+                    eventType: .hapticTransient,
+                    parameters: [
+                        CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.6),
+                        CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.4)
+                    ],
+                    relativeTime: 0
+                ),
+                CHHapticEvent(
+                    eventType: .hapticTransient,
+                    parameters: [
+                        CHHapticEventParameter(parameterID: .hapticIntensity, value: 0.8),
+                        CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.6)
+                    ],
+                    relativeTime: 0.12
+                ),
+                CHHapticEvent(
+                    eventType: .hapticContinuous,
+                    parameters: [
+                        CHHapticEventParameter(parameterID: .hapticIntensity, value: 1.0),
+                        CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.8)
+                    ],
+                    relativeTime: 0.2,
+                    duration: 0.3
+                )
+            ]
+
+            let pattern = try CHHapticPattern(events: events, parameters: [])
+            let player = try engine.makePlayer(with: pattern)
+            try player.start(atTime: 0)
+        } catch {
+            newHighScore()
+        }
+    }
+
     // MARK: - CoreHaptics Pattern (merge celebration)
 
     static func mergeCelebration() {
