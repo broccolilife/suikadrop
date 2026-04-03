@@ -1,0 +1,35 @@
+name: Xcode Build & Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.app
+      - name: Build
+        run: |
+          xcodebuild -project SuikaDrop/SuikaDrop.xcodeproj \
+            -scheme SuikaDrop \
+            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -skipMacroValidation \
+            build 2>&1 | tail -20
+      - name: ML validation
+        run: |
+          pip3 install -r ml/requirements.txt
+          python3 ml/validate_difficulty.py
+
+  lint:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: SwiftLint
+        run: |
+          brew install swiftlint || true
+          swiftlint lint --reporter github-actions-logging SuikaDrop/ || true
