@@ -62,14 +62,58 @@ enum DesignTokens {
     enum Layout {
         static let maxContentWidth: CGFloat = 428
         static let buttonHeight: CGFloat = 50
+        static let minTouchTarget: CGFloat = 44   // Apple HIG
         static let iconSize: CGFloat = 24
         static let iconSizeLg: CGFloat = 32
+        static let tabBarHeight: CGFloat = 49
     }
-    
+
+    // MARK: Semantic Colors
+    enum SemanticColor {
+        static let success = Color.green
+        static let successLight = Color.green.opacity(0.15)
+        static let warning = Color.orange
+        static let warningLight = Color.orange.opacity(0.15)
+        static let error = Color.red
+        static let errorLight = Color.red.opacity(0.15)
+        static let info = Color.blue
+        static let infoLight = Color.blue.opacity(0.15)
+
+        // Game-specific semantic colors
+        static let combo = Color.yellow           // Active combo streak
+        static let danger = Color.red             // Near game over
+        static let bonus = Color.purple           // Bonus fruit
+    }
+
     // MARK: Shadows
     enum Shadow {
-        static let sm: (color: Color, radius: CGFloat, y: CGFloat) = (.black.opacity(0.08), 4, 2)
-        static let md: (color: Color, radius: CGFloat, y: CGFloat) = (.black.opacity(0.12), 8, 4)
-        static let lg: (color: Color, radius: CGFloat, y: CGFloat) = (.black.opacity(0.16), 16, 8)
+        static let sm = ShadowStyle(color: .black.opacity(0.08), radius: 4, y: 2)
+        static let md = ShadowStyle(color: .black.opacity(0.12), radius: 8, y: 4)
+        static let lg = ShadowStyle(color: .black.opacity(0.16), radius: 16, y: 8)
+    }
+}
+
+// MARK: - Shadow Style
+
+struct ShadowStyle {
+    let color: Color
+    let radius: CGFloat
+    let y: CGFloat
+}
+
+extension View {
+    func tokenShadow(_ style: ShadowStyle) -> some View {
+        self.shadow(color: style.color, radius: style.radius, x: 0, y: style.y)
+    }
+
+    /// Liquid Glass prep — uses ultraThinMaterial now, will adopt .glassEffect() on iOS 26
+    func glassBackground(cornerRadius: CGFloat = DesignTokens.Radius.md) -> some View {
+        self.background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: cornerRadius))
+    }
+
+    /// Ensures minimum 44pt touch target (Apple HIG)
+    func minTouchTarget() -> some View {
+        self.frame(minWidth: DesignTokens.Layout.minTouchTarget,
+                   minHeight: DesignTokens.Layout.minTouchTarget)
     }
 }
